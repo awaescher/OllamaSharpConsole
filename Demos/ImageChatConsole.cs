@@ -8,7 +8,7 @@ public partial class ImageChatConsole(IOllamaApiClient ollama) : OllamaConsole(o
 {
 	public override async Task Run()
 	{
-		AnsiConsole.Write(new Rule("Image chat demo").LeftJustified());
+		AnsiConsole.Write(new Rule("Image chat").LeftJustified());
 		AnsiConsole.WriteLine();
 
 		Ollama.SelectedModel = await SelectModel("Select a model you want to chat with:");

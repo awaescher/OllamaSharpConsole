@@ -10,7 +10,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 {
 	public override async Task Run()
 	{
-		AnsiConsole.Write(new Rule("Tool demo").LeftJustified());
+		AnsiConsole.Write(new Rule("Tool chat").LeftJustified());
 		AnsiConsole.WriteLine();
 
 		Ollama.SelectedModel = await SelectModel("Select a model you want to chat with:");
