@@ -16,17 +16,14 @@ public partial class ImageChatConsole(IOllamaApiClient ollama) : OllamaConsole(o
 		if (!string.IsNullOrEmpty(Ollama.SelectedModel))
 		{
 			var keepChatting = true;
-			var systemPrompt = ReadInput("Define a system prompt (optional)");
+			var systemPrompt = ReadInput($"Define a system prompt [{HintTextColor}](optional)[/]");
 
 			do
 			{
 				AnsiConsole.MarkupLine("");
-				AnsiConsole.MarkupLine($"You are talking to [blue]{Ollama.SelectedModel}[/] now.");
-				AnsiConsole.MarkupLine("[gray]To send an image, enter its filename in curly braces,[/]");
-				AnsiConsole.MarkupLine("[gray]like this {c:/image.jpg}[/]");
-				AnsiConsole.MarkupLine("[gray]Submit your messages by hitting return twice.[/]");
-				AnsiConsole.MarkupLine("[gray]Type \"[red]/new[/]\" to start over.[/]");
-				AnsiConsole.MarkupLine("[gray]Type \"[red]/exit[/]\" to leave the chat.[/]");
+				AnsiConsole.MarkupLine($"You are talking to [{AccentTextColor}]{Ollama.SelectedModel}[/] now.");
+				AnsiConsole.MarkupLine($"[{HintTextColor}]To send an image, simply enter its full filename like \"[{AccentTextColor}]c:/image.jpg[/]\"[/]");
+				WriteChatInstructionHint();
 
 				var chat = new Chat(Ollama, systemPrompt);
 
@@ -37,27 +34,26 @@ public partial class ImageChatConsole(IOllamaApiClient ollama) : OllamaConsole(o
 					AnsiConsole.WriteLine();
 					message = ReadInput();
 
-					if (message.Equals("/exit", StringComparison.OrdinalIgnoreCase))
+					if (message.Equals(EXIT_COMMAND, StringComparison.OrdinalIgnoreCase))
 					{
 						keepChatting = false;
 						break;
 					}
 
-					if (message.Equals("/new", StringComparison.OrdinalIgnoreCase))
+					if (message.Equals(START_NEW_COMMAND, StringComparison.OrdinalIgnoreCase))
 					{
 						keepChatting = true;
 						break;
 					}
 
-					var imageMatches = ImagePathRegex().Matches(message).Where(m => !string.IsNullOrEmpty(m.Value));
-					var imageCount = imageMatches.Count();
-					var hasImages = imageCount > 0;
+					var imagePaths = WindowsFileRegex().Matches(message).Where(m => !string.IsNullOrEmpty(m.Value))
+						.Union(UnixFileRegex().Matches(message).Where(m => !string.IsNullOrEmpty(m.Value)))
+						.Select(m => m.Value)
+						.ToArray();
 
-					if (hasImages)
+					if (imagePaths.Length > 0)
 					{
 						byte[][] imageBytes;
-						var imagePathsWithCurlyBraces = imageMatches.Select(m => m.Value);
-						var imagePaths = imageMatches.Select(m => m.Groups[1].Value);
 
 						try
 						{
@@ -65,16 +61,19 @@ public partial class ImageChatConsole(IOllamaApiClient ollama) : OllamaConsole(o
 						}
 						catch (IOException ex)
 						{
-							AnsiConsole.MarkupLineInterpolated($"Could not load your {(imageCount == 1 ? "image" : "images")}:");
-							AnsiConsole.MarkupLineInterpolated($"[red]{Markup.Escape(ex.Message)}[/]");
+							AnsiConsole.MarkupLineInterpolated($"Could not load your {(imagePaths.Length == 1 ? "image" : "images")}:");
+							AnsiConsole.MarkupLineInterpolated($"[{ErrorTextColor}]{Markup.Escape(ex.Message)}[/]");
 							AnsiConsole.MarkupLine("Please try again");
 							continue;
 						}
 
 						var imagesBase64 = imageBytes.Select(Convert.ToBase64String);
 
-						foreach (var path in imagePathsWithCurlyBraces)
+						// remove paths from the message
+						foreach (var path in imagePaths)
 							message = message.Replace(path, "");
+
+						message += Environment.NewLine + Environment.NewLine + $"(the user attached {imagePaths.Length} {(imagePaths.Length == 1 ? "image" : "images")})";
 
 						foreach (var consoleImage in imageBytes.Select(bytes => new CanvasImage(bytes)))
 						{
@@ -83,19 +82,19 @@ public partial class ImageChatConsole(IOllamaApiClient ollama) : OllamaConsole(o
 						}
 
 						AnsiConsole.WriteLine();
-						if (imageCount == 1)
-							AnsiConsole.MarkupLine("[gray]The image was scaled down for the console only, the model gets the full version.[/]");
+						if (imagePaths.Length == 1)
+							AnsiConsole.MarkupLine($"[{HintTextColor}]The image was scaled down for the console only, the model gets the full version.[/]");
 						else
-							AnsiConsole.MarkupLine("[gray]The images were scaled down for the console only, the model gets full versions.[/]");
+							AnsiConsole.MarkupLine($"[{HintTextColor}]The images were scaled down for the console only, the model gets full versions.[/]");
 						AnsiConsole.WriteLine();
 
 						await foreach (var answerToken in chat.Send(message, [], imagesBase64))
-							AnsiConsole.MarkupInterpolated($"[cyan]{answerToken}[/]");
+							AnsiConsole.MarkupInterpolated($"[{AiTextColor}]{answerToken}[/]");
 					}
 					else
 					{
 						await foreach (var answerToken in chat.Send(message))
-							AnsiConsole.MarkupInterpolated($"[cyan]{answerToken}[/]");
+							AnsiConsole.MarkupInterpolated($"[{AiTextColor}]{answerToken}[/]");
 					}
 
 					AnsiConsole.WriteLine();
@@ -104,6 +103,15 @@ public partial class ImageChatConsole(IOllamaApiClient ollama) : OllamaConsole(o
 		}
 	}
 
-	[GeneratedRegex("{([^}]*)}")]
-	private static partial Regex ImagePathRegex();
+	/// <summary>
+	/// https://stackoverflow.com/a/24703223/704281
+	/// </summary>
+	[GeneratedRegex("\\b[a-zA-Z]:[\\\\/](?:[^<>:\"/\\\\|?*\\n\\r]+[\\\\/])*[^<>:\"/\\\\|?*\\n\\r]+\\.\\w+\\b")]
+	private static partial Regex WindowsFileRegex();
+
+	/// <summary>
+	/// https://stackoverflow.com/a/169021/704281
+	/// </summary>
+	[GeneratedRegex("(.+)\\/([^\\/]+)")]
+	private static partial Regex UnixFileRegex();
 }

@@ -18,17 +18,15 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 		if (!string.IsNullOrEmpty(Ollama.SelectedModel))
 		{
 			var keepChatting = true;
-			var systemPrompt = ReadInput("Define a system prompt (optional)");
+			var systemPrompt = ReadInput($"Define a system prompt [{HintTextColor}](optional)[/]");
 
 			do
 			{
 				AnsiConsole.MarkupLine("");
-				AnsiConsole.MarkupLineInterpolated($"You are talking to [blue]{Ollama.SelectedModel}[/] now.");
+				AnsiConsole.MarkupLineInterpolated($"You are talking to [{AccentTextColor}]{Ollama.SelectedModel}[/] now.");
 				AnsiConsole.MarkupLine("When asked for the weather or the news for a given location, it will try to use a predefined tool.");
 				AnsiConsole.MarkupLine("If any tool is used, the intended usage information is printed.");
-				AnsiConsole.MarkupLine("[gray]Submit your messages by hitting return twice.[/]");
-				AnsiConsole.MarkupLine("[gray]Type \"[red]/new[/]\" to start over.[/]");
-				AnsiConsole.MarkupLine("[gray]Type \"[red]/exit[/]\" to leave the chat.[/]");
+				WriteChatInstructionHint();
 
 				var chat = new Chat(Ollama, systemPrompt);
 
@@ -39,13 +37,13 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 					AnsiConsole.WriteLine();
 					message = ReadInput();
 
-					if (message.Equals("/exit", StringComparison.OrdinalIgnoreCase))
+					if (message.Equals(EXIT_COMMAND, StringComparison.OrdinalIgnoreCase))
 					{
 						keepChatting = false;
 						break;
 					}
 
-					if (message.Equals("/new", StringComparison.OrdinalIgnoreCase))
+					if (message.Equals(START_NEW_COMMAND, StringComparison.OrdinalIgnoreCase))
 					{
 						keepChatting = true;
 						break;
@@ -54,11 +52,11 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 					try
 					{
 						await foreach (var answerToken in chat.Send(message, GetTools()))
-							AnsiConsole.MarkupInterpolated($"[cyan]{answerToken}[/]");
+							AnsiConsole.MarkupInterpolated($"[{AiTextColor}]{answerToken}[/]");
 					}
 					catch (OllamaException ex)
 					{
-						AnsiConsole.MarkupLineInterpolated($"[red]{ex.Message}[/]");
+						AnsiConsole.MarkupLineInterpolated($"[{ErrorTextColor}]{ex.Message}[/]");
 					}
 
 					var toolCalls = chat.Messages.LastOrDefault()?.ToolCalls?.ToArray() ?? [];
@@ -78,7 +76,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 							AnsiConsole.MarkupLineInterpolated($"    - [purple]return value[/]: [purple]\"{result}\"[/]");
 
 							await foreach (var answerToken in chat.SendAs(ChatRole.Tool, result, GetTools()))
-								AnsiConsole.MarkupInterpolated($"[cyan]{answerToken}[/]");
+								AnsiConsole.MarkupInterpolated($"[{AiTextColor}]{answerToken}[/]");
 						}
 					}
 

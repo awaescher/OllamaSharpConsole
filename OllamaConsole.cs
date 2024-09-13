@@ -6,18 +6,30 @@ namespace OllamaApiConsole;
 
 public abstract class OllamaConsole(IOllamaApiClient ollama)
 {
+	private const char MULTILINE_OPEN = '[';
+
+	private const char MULTILINE_CLOSE = ']';
+
+	public static string HintTextColor { get; } = "gray";
+
+	public static string AccentTextColor { get; } = "blue";
+
+	public static string WarningTextColor { get; } = "yellow";
+
+	public static string ErrorTextColor { get; } = "red";
+
+	public static string AiTextColor { get; } = "cyan";
+
+	public static string START_NEW_COMMAND { get; } = "/new";
+
+	public static string EXIT_COMMAND { get; } = "/exit";
+
 	public IOllamaApiClient Ollama { get; } = ollama ?? throw new ArgumentNullException(nameof(ollama));
 
 	public abstract Task Run();
 
 	public static string ReadInput(string prompt = "", string additionalInformation = "")
 	{
-		const char MULTILINE_OPEN = '[';
-		const char MULTILINE_CLOSE = ']';
-
-		if (string.IsNullOrEmpty(additionalInformation))
-			additionalInformation = $"Use [red]{Markup.Escape(MULTILINE_OPEN.ToString())}[/] to start and [red]{Markup.Escape(MULTILINE_CLOSE.ToString())}[/] to end multiline input.";
-
 		if (!string.IsNullOrEmpty(prompt))
 			AnsiConsole.MarkupLine(prompt);
 
@@ -30,7 +42,7 @@ public abstract class OllamaConsole(IOllamaApiClient ollama)
 
 		while (!isMultiLineActive.HasValue || isMultiLineActive.Value)
 		{
-			AnsiConsole.Markup("[blue]> [/]");
+			AnsiConsole.Markup($"[{AccentTextColor}]> [/]");
 			var input = Console.ReadLine() ?? "";
 
 			if (!isMultiLineActive.HasValue)
@@ -49,6 +61,12 @@ public abstract class OllamaConsole(IOllamaApiClient ollama)
 			return builder.ToString().Trim().TrimStart(MULTILINE_OPEN).TrimEnd(MULTILINE_CLOSE);
 
 		return builder.ToString().TrimEnd();
+	}
+
+	protected void WriteChatInstructionHint()
+	{
+		AnsiConsole.MarkupLine($"[{HintTextColor}]Enter [{AccentTextColor}]{START_NEW_COMMAND}[/] to start over or [{AccentTextColor}]{EXIT_COMMAND}[/] to leave.[/]");
+		AnsiConsole.MarkupLine($"[{HintTextColor}]Begin with [{AccentTextColor}]{Markup.Escape(MULTILINE_OPEN.ToString())}[/] to start multiline input. Sumbmit it by ending with [{AccentTextColor}]{Markup.Escape(MULTILINE_CLOSE.ToString())}[/].[/]");
 	}
 
 	protected async Task<string> SelectModel(string prompt, string additionalInformation = "")

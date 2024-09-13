@@ -13,7 +13,7 @@ var connected = false;
 
 do
 {
-	AnsiConsole.MarkupLine("Enter the Ollama [blue]machine name[/] or [blue]endpoint url[/]");
+	AnsiConsole.MarkupLine($"Enter the Ollama [{OllamaConsole.AccentTextColor}]machine name[/] or [{OllamaConsole.AccentTextColor}]endpoint url[/]");
 
 	var url = OllamaConsole.ReadInput();
 
@@ -36,11 +36,11 @@ do
 
 		var models = await ollama.ListLocalModels();
 		if (!models.Any())
-			AnsiConsole.MarkupLineInterpolated($"[yellow]Your Ollama instance does not provide any models :([/]");
+			AnsiConsole.MarkupLineInterpolated($"[{OllamaConsole.WarningTextColor}]Your Ollama instance does not provide any models :([/]");
 	}
 	catch (Exception ex)
 	{
-		AnsiConsole.MarkupLineInterpolated($"[red]{Markup.Escape(ex.Message)}[/]");
+		AnsiConsole.MarkupLineInterpolated($"[{OllamaConsole.ErrorTextColor}]{Markup.Escape(ex.Message)}[/]");
 		AnsiConsole.WriteLine();
 	}
 } while (!connected);
@@ -82,8 +82,8 @@ do
 	}
 	catch (Exception ex)
 	{
-		AnsiConsole.MarkupLine("An error occurred. Press [blue]Return[/] to start over.");
-		AnsiConsole.MarkupLineInterpolated($"[red]{Markup.Escape(ex.Message)}[/]");
+		AnsiConsole.MarkupLine($"An error occurred. Press [{OllamaConsole.AccentTextColor}]Return[/] to start over.");
+		AnsiConsole.MarkupLineInterpolated($"[{OllamaConsole.ErrorTextColor}]{Markup.Escape(ex.Message)}[/]");
 		Console.ReadLine();
 	}
 } while (demo != "Exit");

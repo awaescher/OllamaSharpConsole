@@ -70,7 +70,7 @@ public class ModelManagerConsole(IOllamaApiClient ollama) : OllamaConsole(ollama
 		var source = await SelectModel("Which model should be copied?");
 		if (!string.IsNullOrEmpty(source))
 		{
-			var destination = ReadInput($"Enter a name for the copy of [blue]{source}[/]:");
+			var destination = ReadInput($"Enter a name for the copy of [{AccentTextColor}]{source}[/]:");
 			await Ollama.CopyModel(source, destination);
 		}
 	}
@@ -78,7 +78,7 @@ public class ModelManagerConsole(IOllamaApiClient ollama) : OllamaConsole(ollama
 	private async Task CreateModel()
 	{
 		var createName = ReadInput("Enter a name for your new model:");
-		var createModelFileContent = ReadInput("Enter the contents for the model file:", "[gray]See [/][blue][link]https://ollama.ai/library[/][/][gray] for available models[/]");
+		var createModelFileContent = ReadInput("Enter the contents for the model file:", $"[{HintTextColor}]See [/][{AccentTextColor}][link]https://ollama.ai/library[/][/][{HintTextColor}] for available models[/]");
 		await foreach (var status in Ollama.CreateModel(createName, createModelFileContent))
 			AnsiConsole.MarkupLineInterpolated($"{status?.Status ?? ""}");
 	}
@@ -98,7 +98,7 @@ public class ModelManagerConsole(IOllamaApiClient ollama) : OllamaConsole(ollama
 			var embedContent = ReadInput("Enter a string to to embed:");
 			Ollama.SelectedModel = embedModel;
 			var embedResponse = await Ollama.Embed(embedContent);
-			AnsiConsole.MarkupLineInterpolated($"[cyan]{string.Join(", ", embedResponse.Embeddings[0])}[/]");
+			AnsiConsole.MarkupLineInterpolated($"[{AiTextColor}]{string.Join(", ", embedResponse.Embeddings[0])}[/]");
 		}
 	}
 
@@ -116,12 +116,12 @@ public class ModelManagerConsole(IOllamaApiClient ollama) : OllamaConsole(ollama
 	{
 		var models = await Ollama.ListLocalModels();
 		foreach (var model in models.OrderBy(m => m.Name))
-			AnsiConsole.MarkupLineInterpolated($"[cyan]{model.Name}[/]");
+			AnsiConsole.MarkupLineInterpolated($"[{AiTextColor}]{model.Name}[/]");
 	}
 
 	private async Task PullModel()
 	{
-		var pullModel = ReadInput("Enter the name of the model you want to pull:", "[gray]See [/][blue][link]https://github.com/jmorganca/ollama/blob/main/docs/modelfile.md[/][/][gray] for reference[/]");
+		var pullModel = ReadInput("Enter the name of the model you want to pull:", $"[{HintTextColor}]See [/][{AccentTextColor}][link]https://github.com/jmorganca/ollama/blob/main/docs/modelfile.md[/][/][{HintTextColor}] for reference[/]");
 
 		await AnsiConsole.Progress().StartAsync(async context =>
 		{
@@ -159,8 +159,8 @@ public class ModelManagerConsole(IOllamaApiClient ollama) : OllamaConsole(ollama
 		{
 			foreach (var pi in o.GetType().GetProperties())
 			{
-				AnsiConsole.MarkupLineInterpolated($"[cyan][underline][bold]{pi.Name}:[/][/][/]");
-				AnsiConsole.MarkupLineInterpolated($"[darkcyan]{pi.GetValue(o)?.ToString() ?? ""}[/]");
+				AnsiConsole.MarkupLineInterpolated($"[{OllamaConsole.AccentTextColor}][underline][bold]{pi.Name}:[/][/][/]");
+				AnsiConsole.MarkupLineInterpolated($"[{OllamaConsole.AccentTextColor}]{pi.GetValue(o)?.ToString() ?? ""}[/]");
 				AnsiConsole.WriteLine();
 			}
 		}
