@@ -16,7 +16,7 @@ public partial class ImageChatConsole(IOllamaApiClient ollama) : OllamaConsole(o
 		if (!string.IsNullOrEmpty(Ollama.SelectedModel))
 		{
 			var keepChatting = true;
-			var systemPrompt = ReadMultilineInput("Define a system prompt (optional)");
+			var systemPrompt = ReadInput("Define a system prompt (optional)");
 
 			do
 			{

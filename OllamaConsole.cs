@@ -12,30 +12,41 @@ public abstract class OllamaConsole(IOllamaApiClient ollama)
 
 	public static string ReadInput(string prompt = "", string additionalInformation = "")
 	{
+		const char MULTILINE_OPEN = '[';
+		const char MULTILINE_CLOSE = ']';
+
+		if (string.IsNullOrEmpty(additionalInformation))
+			additionalInformation = $"Use [red]{Markup.Escape(MULTILINE_OPEN.ToString())}[/] to start and [red]{Markup.Escape(MULTILINE_CLOSE.ToString())}[/] to end multiline input.";
+
 		if (!string.IsNullOrEmpty(prompt))
 			AnsiConsole.MarkupLine(prompt);
-		if (!string.IsNullOrEmpty(additionalInformation))
-			AnsiConsole.MarkupLine(additionalInformation);
 
-		return AnsiConsole.Ask<string>("[blue]> [/]");
-	}
-
-	public static string ReadMultilineInput(string prompt = "", string additionalInformation = "")
-	{
-		if (!string.IsNullOrEmpty(prompt))
-			AnsiConsole.MarkupLine(prompt);
 		if (!string.IsNullOrEmpty(additionalInformation))
 			AnsiConsole.MarkupLine(additionalInformation);
 
 		var builder = new StringBuilder();
-		var input = "";
+		bool? isMultiLineActive = null;
+		var needsCleaning = false;
 
-		while (!string.IsNullOrEmpty(input) || builder.Length == 0)
+		while (!isMultiLineActive.HasValue || isMultiLineActive.Value)
 		{
 			AnsiConsole.Markup("[blue]> [/]");
-			input = Console.ReadLine();
+			var input = Console.ReadLine() ?? "";
+
+			if (!isMultiLineActive.HasValue)
+			{
+				isMultiLineActive = input.TrimStart().StartsWith(MULTILINE_OPEN);
+				needsCleaning = isMultiLineActive.GetValueOrDefault();
+			}
+
 			builder.AppendLine(input);
+
+			if (input.TrimEnd().EndsWith(MULTILINE_CLOSE) && isMultiLineActive.GetValueOrDefault())
+				isMultiLineActive = false;
 		}
+
+		if (needsCleaning)
+			return builder.ToString().Trim().TrimStart(MULTILINE_OPEN).TrimEnd(MULTILINE_CLOSE);
 
 		return builder.ToString().TrimEnd();
 	}

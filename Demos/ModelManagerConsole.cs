@@ -78,7 +78,7 @@ public class ModelManagerConsole(IOllamaApiClient ollama) : OllamaConsole(ollama
 	private async Task CreateModel()
 	{
 		var createName = ReadInput("Enter a name for your new model:");
-		var createModelFileContent = ReadMultilineInput("Enter the contents for the model file:", "[gray]See [/][blue][link]https://ollama.ai/library[/][/][gray] for available models[/]");
+		var createModelFileContent = ReadInput("Enter the contents for the model file:", "[gray]See [/][blue][link]https://ollama.ai/library[/][/][gray] for available models[/]");
 		await foreach (var status in Ollama.CreateModel(createName, createModelFileContent))
 			AnsiConsole.MarkupLineInterpolated($"{status?.Status ?? ""}");
 	}
@@ -95,7 +95,7 @@ public class ModelManagerConsole(IOllamaApiClient ollama) : OllamaConsole(ollama
 		var embedModel = await SelectModel("Which model should be used to create embeddings?");
 		if (!string.IsNullOrEmpty(embedModel))
 		{
-			var embedContent = ReadMultilineInput("Enter a string to to embed:");
+			var embedContent = ReadInput("Enter a string to to embed:");
 			Ollama.SelectedModel = embedModel;
 			var embedResponse = await Ollama.Embed(embedContent);
 			AnsiConsole.MarkupLineInterpolated($"[cyan]{string.Join(", ", embedResponse.Embeddings[0])}[/]");

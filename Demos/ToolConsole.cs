@@ -18,7 +18,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 		if (!string.IsNullOrEmpty(Ollama.SelectedModel))
 		{
 			var keepChatting = true;
-			var systemPrompt = ReadMultilineInput("Define a system prompt (optional)");
+			var systemPrompt = ReadInput("Define a system prompt (optional)");
 
 			do
 			{
@@ -37,7 +37,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 				do
 				{
 					AnsiConsole.WriteLine();
-					message = ReadMultilineInput();
+					message = ReadInput();
 
 					if (message.Equals("/exit", StringComparison.OrdinalIgnoreCase))
 					{
@@ -76,7 +76,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 
 							var result = FunctionHelper.ExecuteFunction(function);
 							AnsiConsole.MarkupLineInterpolated($"    - [purple]return value[/]: [purple]\"{result}\"[/]");
-							
+
 							await foreach (var answerToken in chat.SendAs(ChatRole.Tool, result, GetTools()))
 								AnsiConsole.MarkupInterpolated($"[cyan]{answerToken}[/]");
 						}
@@ -87,7 +87,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 			} while (keepChatting);
 		}
 	}
-	
+
 	private static IEnumerable<Tool> GetTools() => [new WeatherTool(), new NewsTool()];
 
 	private sealed class WeatherTool : Tool
@@ -142,7 +142,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 			var parameters = MapParameters(toolFunction.Method, function.Arguments!);
 			return toolFunction.DynamicInvoke(parameters)?.ToString()!;
 		}
-		
+
 		private static readonly Dictionary<string, Func<string, string?, string>> _availableFunctions = new()
 		{
 			["get_current_weather"] = (location, format) =>
@@ -152,7 +152,7 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 					"fahrenheit" => (Random.Shared.Next(23, 104), "°F"),
 					_ => (Random.Shared.Next(-5, 40), "°C"),
 				};
-				
+
 				return $"{temperature} {unit} in {location}";
 			},
 			["get_current_news"] = (location, category) =>
@@ -161,22 +161,22 @@ public class ToolConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 				return $"Could not find news for {location} (category: {category}).";
 			}
 		};
-		
+
 		private static object[] MapParameters(MethodBase method, IDictionary<string, string> namedParameters)
 		{
 			var paramNames = method.GetParameters().Select(p => p.Name).ToArray();
 			var parameters = new object[paramNames.Length];
-			
-			for (var i = 0; i < parameters.Length; ++i) 
+
+			for (var i = 0; i < parameters.Length; ++i)
 				parameters[i] = Type.Missing;
-			
+
 			foreach (var (paramName, value) in namedParameters)
 			{
 				var paramIndex = Array.IndexOf(paramNames, paramName);
 				if (paramIndex >= 0)
 					parameters[paramIndex] = value;
 			}
-			
+
 			return parameters;
 		}
 	}

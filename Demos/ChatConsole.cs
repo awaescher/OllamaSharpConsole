@@ -15,7 +15,7 @@ public class ChatConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 		if (!string.IsNullOrEmpty(Ollama.SelectedModel))
 		{
 			var keepChatting = true;
-			var systemPrompt = ReadMultilineInput("Define a system prompt (optional)");
+			var systemPrompt = ReadInput("Define a system prompt (optional)");
 
 			do
 			{
@@ -32,7 +32,7 @@ public class ChatConsole(IOllamaApiClient ollama) : OllamaConsole(ollama)
 				do
 				{
 					AnsiConsole.WriteLine();
-					message = ReadMultilineInput();
+					message = ReadInput();
 
 					if (message.Equals("/exit", StringComparison.OrdinalIgnoreCase))
 					{
