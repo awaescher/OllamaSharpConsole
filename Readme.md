@@ -1,3 +1,6 @@
+> [!NOTE]
+> This demo project made its way back to the [OllamaSharp](https://github.com/awaescher/OllamaSharp) repository.
+
 <p align="center">
  <img alt="ollama" height="200px" src="./docs/Ollama.png">
 </p>
